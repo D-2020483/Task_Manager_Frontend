@@ -1,8 +1,9 @@
 import { Typography,  Box, FormControl } from "@mui/material";
-import React, { useState } from "react";
+import React, { useState , useEffect} from "react";
 import { Button, TextField } from "@mui/material";
 import { Plus, Trash2, PencilIcon } from "lucide-react";
 import { Paper, Modal , Select, MenuItem, InputLabel} from "@mui/material";
+import api from "../utils/api";
 
 const modalStyle = {
   position: "absolute",
@@ -35,6 +36,19 @@ const DashboardPage = () => {
   const [filter, setFilter] = useState("all"); //filter state
   const [sortBy, setSortBy] = useState("none"); //sort state
 
+  // get all the tasks for the dashboard
+  useEffect(() => {
+    const fetchTasks = async () => {
+      try {
+        const response = await api.get("/");
+        setTasks(response.data);
+      } catch (error) {
+        console.error("Error fetching tasks:", error);
+      }
+    };
+    fetchTasks();
+  }, []);
+
   //open modal
   const handleOpen = () => setOpen(true);
   const handleClose = () => {
@@ -47,24 +61,39 @@ const DashboardPage = () => {
   };
 
   //Add new task or edit task
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const taskData = { title: newTask, description , dueDate, status };
 
-    if (editingIndex !== null) {
-      const updated = [...tasks];
-      updated[editingIndex] = taskData;
-      setTasks(updated);
-    } else {
-      setTasks([...tasks, taskData]);
+    try {
+      if (editingIndex !== null) {
+const taskToUpdate = tasks[editingIndex];
+const response = await api.put(`/${taskToUpdate._id}`, taskData);
+
+        const updatedTasks = [...tasks];
+        updatedTasks[editingIndex] = response.data;
+        setTasks(updatedTasks);
+      } else {
+        const response = await api.post("/", taskData);
+        setTasks([...tasks, response.data]);
+      }
+      handleClose();
+    } catch (error) {
+      console.error("Error adding task:", error);
     }
-    handleClose();
   };
 
   //delete task
-  const handleDelete = (index) => {
-    const updated = tasks.filter((_, i) => i !== index);
-    setTasks(updated);
+  const handleDelete = async(index) => {
+  const taskToDelete = tasks[index];
+    try {
+      await api.delete(`/${taskToDelete._id}`);
+
+      const updatedTasks = tasks.filter((_, i) => i !== index);
+      setTasks(updatedTasks);
+    } catch (error) {
+      console.error("Error deleting task:", error);
+    }
   };
 
   //edit task
