@@ -22,7 +22,7 @@ const RegisterPage = () => {
     e.preventDefault();
     try {
       //Register API
-      await axios.post("http://localhost:5000/api/auth/register", formData);
+      await axios.post(" https://task-manager-backend-q8kw.onrender.com/api/auth/register", formData);
       alert("Registered Successfully login again");
       navigate("/login");
     } catch (error) {
