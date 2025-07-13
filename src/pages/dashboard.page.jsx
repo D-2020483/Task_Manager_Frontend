@@ -1,8 +1,8 @@
-import { Typography,  Box, FormControl } from "@mui/material";
-import React, { useState , useEffect} from "react";
+import { Typography, Box, FormControl } from "@mui/material";
+import React, { useState, useEffect } from "react";
 import { Button, TextField } from "@mui/material";
 import { Plus, Trash2, PencilIcon } from "lucide-react";
-import { Paper, Modal , Select, MenuItem, InputLabel} from "@mui/material";
+import { Paper, Modal, Select, MenuItem, InputLabel } from "@mui/material";
 import api from "../utils/api";
 
 const modalStyle = {
@@ -33,14 +33,14 @@ const DashboardPage = () => {
   const [editingIndex, setEditingIndex] = useState(null); //editing index
 
   //filter and sort state
-  const [filter, setFilter] = useState("all"); //filter state
+  const [filterStatus, setFilterStatus] = useState("all"); //filter state
   const [sortBy, setSortBy] = useState("none"); //sort state
 
   // get all the tasks for the dashboard
   useEffect(() => {
     const fetchTasks = async () => {
       try {
-        const response = await api.get("/");
+        const response = await api.get("/tasks");
         setTasks(response.data);
       } catch (error) {
         console.error("Error fetching tasks:", error);
@@ -63,18 +63,18 @@ const DashboardPage = () => {
   //Add new task or edit task
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const taskData = { title: newTask, description , dueDate, status };
+    const taskData = { title: newTask, description, dueDate, status };
 
     try {
       if (editingIndex !== null) {
-const taskToUpdate = tasks[editingIndex];
-const response = await api.put(`/${taskToUpdate._id}`, taskData);
+        const taskToUpdate = tasks[editingIndex];
+        const response = await api.put(`/tasks/${taskToUpdate._id}`, taskData);
 
         const updatedTasks = [...tasks];
         updatedTasks[editingIndex] = response.data;
         setTasks(updatedTasks);
       } else {
-        const response = await api.post("/", taskData);
+        const response = await api.post("/tasks", taskData);
         setTasks([...tasks, response.data]);
       }
       handleClose();
@@ -84,10 +84,10 @@ const response = await api.put(`/${taskToUpdate._id}`, taskData);
   };
 
   //delete task
-  const handleDelete = async(index) => {
-  const taskToDelete = tasks[index];
+  const handleDelete = async (index) => {
+    const taskToDelete = tasks[index];
     try {
-      await api.delete(`/${taskToDelete._id}`);
+      await api.delete(`/tasks/${taskToDelete._id}`);
 
       const updatedTasks = tasks.filter((_, i) => i !== index);
       setTasks(updatedTasks);
@@ -109,15 +109,15 @@ const response = await api.put(`/${taskToUpdate._id}`, taskData);
 
   //filter tasks and sort tasks
   const filteredAndSortedTasks = tasks
-    .filter((task) => 
-      filter === "all" ? true : task.status === filter
-  )
+    .filter((task) =>
+      filterStatus === "all" ? true : task.status === filterStatus
+    )
     .sort((a, b) => {
       if (sortBy === "date") {
         return new Date(a.dueDate) - new Date(b.dueDate);
-        } 
-        return 0;
-        });
+      }
+      return 0;
+    });
 
   return (
     <div className="h-screen bg-gray-300 p-8">
@@ -140,11 +140,11 @@ const response = await api.put(`/${taskToUpdate._id}`, taskData);
         <FormControl size="small" className="w-40">
           <InputLabel>Status</InputLabel>
           <Select
-          labelId="status-label"
-          id="status-select"
-          value={status}
-          label="Status"
-          onChange={(e) => setStatus(e.target.value)}
+            labelId="status-label"
+            id="status-select"
+            value={filterStatus}
+            label="Status"
+            onChange={(e) => setFilterStatus(e.target.value)}
           >
             <MenuItem value="all">All</MenuItem>
             <MenuItem value="pending">Pending</MenuItem>
@@ -158,20 +158,24 @@ const response = await api.put(`/${taskToUpdate._id}`, taskData);
             value={sortBy}
             label="Sort By"
             onChange={(e) => setSortBy(e.target.value)}
-            >
-              <MenuItem value="none">None</MenuItem>
-              <MenuItem value="date">Due Date</MenuItem>
-            </Select>
-            </FormControl>
-            </div>
+          >
+            <MenuItem value="none">None</MenuItem>
+            <MenuItem value="date">Due Date</MenuItem>
+          </Select>
+        </FormControl>
+      </div>
       {/*Task list*/}
       <div className="grid gap-4 mt-4">
-        {tasks.map((task, index) => (
+        {filteredAndSortedTasks.map((task, index) => (
           <Paper key={index} className="flex justify-between items-center p-4">
             <Box className="flex-1">
-            <Typography className="font-bold">{task.title}</Typography>
-            <Typography className="text-sm text-gray-400">{task.description}</Typography>
-            <Typography className="text-sm text-gray-400">Due: {task.dueDate} | Status: {task.status}</Typography>
+              <Typography className="font-bold">{task.title}</Typography>
+              <Typography className="text-sm text-gray-400">
+                {task.description}
+              </Typography>
+              <Typography className="text-sm text-gray-400">
+                Due: {task.dueDate?.slice(0, 10)} | Status: {task.status}
+              </Typography>
             </Box>
             <div className="flex gap-2">
               {/*Edit button*/}
@@ -227,17 +231,16 @@ const response = await api.put(`/${taskToUpdate._id}`, taskData);
               fullWidth
               InputLabelProps={{ shrink: true }}
             />
-            <FormControl 
-            fullWidth>
-              <InputLabel >Status</InputLabel>
+            <FormControl fullWidth>
+              <InputLabel>Status</InputLabel>
               <Select
                 value={status}
                 label="Status"
                 onChange={(e) => setStatus(e.target.value)}
-                >
-                  <MenuItem value="pending">Pending</MenuItem>
-                  <MenuItem value="completed">Completed</MenuItem>
-                </Select>
+              >
+                <MenuItem value="pending">Pending</MenuItem>
+                <MenuItem value="completed">Completed</MenuItem>
+              </Select>
             </FormControl>
             <Button
               type="submit"
