@@ -1,1 +1,1 @@
-> 🏠 This is the frontend part of the Task_Manager wen application. For full project details, visit the [main repository](https://github.com/D-2020483/Task_Manager).
+> 🏠 This is the frontend part of the Task_Manager web application. For full project details, visit the [main repository](https://github.com/D-2020483/Task_Manager).
